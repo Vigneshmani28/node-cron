@@ -1,0 +1,29 @@
+name: Build EXE
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm install
+
+      - run: node --experimental-sea-config sea-config.json
+
+      - run: copy "%ProgramFiles%\nodejs\node.exe" app.exe
+
+      - run: npx postject app.exe NODE_SEA_BLOB sea-prep.blob ^
+          --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-exe
+          path: app.exe
