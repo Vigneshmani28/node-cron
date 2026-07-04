@@ -8,22 +8,41 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - run: node --experimental-sea-config sea-config.json
+      - name: Generate SEA blob
+        run: node --experimental-sea-config sea-config.json
 
-      - run: copy "%ProgramFiles%\nodejs\node.exe" app.exe
+      - name: Show Node location
+        shell: pwsh
+        run: |
+          node -v
+          where.exe node
+          Write-Host "Node executable: $((Get-Command node).Source)"
 
-      - run: npx postject app.exe NODE_SEA_BLOB sea-prep.blob ^
-          --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+      - name: Copy node.exe
+        shell: pwsh
+        run: |
+          $node = (Get-Command node).Source
+          Copy-Item $node app.exe
 
-      - uses: actions/upload-artifact@v4
+      - name: Inject SEA blob
+        shell: pwsh
+        run: |
+          npx postject app.exe NODE_SEA_BLOB sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
         with:
           name: app-exe
           path: app.exe
